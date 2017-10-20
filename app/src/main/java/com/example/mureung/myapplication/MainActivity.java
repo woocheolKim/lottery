@@ -26,26 +26,31 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<Integer> values;
 
-    static int idx;
+    static int idx = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        idx = 1;
-
         tv_text = (TextView)findViewById(R.id.tv_text);
 
         values = new ArrayList<Integer>();
 
+        // 회차 뽑아오는 통신
         JsoupTask2 jsoupTask2 = new JsoupTask2();
         jsoupTask2.execute();
 
+        // 회차 뽑아오는 통신이 끝나고 실행되어야되서 3초 후 실행
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
+                // 1회부터 마지막회까지 통신 => 초기에만 다 불러오고
+                // DB에 저장후에 그 다음부터는 최근 회만 통신 하도록
+                // 변경 해야됨
+                // TODO
                 for (int i = 1; i <= parameter; i++){
+                    // 데이터 뽑아와서 계산 하고 텍스트뷰에 보여줌
                     JsoupTask jsoupTask = new JsoupTask();
                     jsoupTask.setParm(i);
                     jsoupTask.execute();
@@ -55,6 +60,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 조를 뽑아오기위한 통신
+    // TODO 초기에만 데이터를 처음부터 다 받아오고 DB에 저장
+    // 그 후부터는 DB가 있으면 가장 최근회만 불러옴
+    // DB에 각 횟차 정보와 조 데이터를 가지고있어서
+    // 디비에있는 최근 횟차와 통신해야될 횟차가 같으면 통신안하는 구조로
+    // 해야됨.
     public class JsoupTask extends AsyncTask<Void, Void, Void> {
 
         private String url = "https://search.naver.com/search.naver?sm=tab_etc&where=nexearch&query=";
@@ -68,7 +78,8 @@ public class MainActivity extends AppCompatActivity {
             this.param = param;
         }
 
-        public int calculateAverage(List<Integer> lists){
+        // 계산 알고리즘 => 평균? or 가장 많이나온 수치
+        public int calculate(List<Integer> lists){
             Integer sum = 0;
 
             if (!lists.isEmpty()){
@@ -97,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
 
-            if (param != parameter){
+            if (param <= parameter){
                 switch (idx){
                     case 1:
                         tv_text.setText("계산중.");
@@ -116,28 +127,11 @@ public class MainActivity extends AppCompatActivity {
                 values.add(Integer.valueOf(key1.text().charAt(0)));
                 values.add(Integer.valueOf(key2.text().charAt(0)));
             }else{
-                if (param == parameter){
-                    switch (idx){
-                        case 1:
-                            tv_text.setText("계산중.");
-                            idx++;
-                            break;
-                        case 2:
-                            tv_text.setText("계산중..");
-                            idx++;
-                            break;
-                        case 3:
-                            tv_text.setText("계산중...");
-                            idx = 1;
-                            break;
-                    }
-
-                    values.add(Integer.valueOf(key1.text().charAt(0)));
-                    values.add(Integer.valueOf(key2.text().charAt(0)));
-                }
-
-                tv_text.setText(calculateAverage(values) + "조");
+                values.add(Integer.valueOf(key1.text().charAt(0)));
+                values.add(Integer.valueOf(key2.text().charAt(0)));
             }
+
+                tv_text.setText(calculate(values) + "조");
         }
     }
 
